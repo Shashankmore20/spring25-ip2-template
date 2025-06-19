@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useUserContext from './useUserContext';
-import { GameInstance } from '../types';
+import { GameInstance, GameMove2, NimMove } from '../types';
 
 /**
  * Custom hook to manage the state and logic for the "Nim" game page,
@@ -16,18 +16,28 @@ import { GameInstance } from '../types';
 const useNimGamePage = (gameState: GameInstance) => {
   const { user, socket } = useUserContext();
 
-  // TODO: Task 2 - Define the state variable to store the current move (`move`)
+  const [move, setMove] = useState<number | string>('');
 
   const handleMakeMove = async () => {
-    // TODO: Task 2 - Emit a socket event to make a move in the Nim game
+    const nimMove: GameMove2<NimMove> = {
+      playerID: user.username,
+      gameID: gameState.gameID,
+      move: { numObjects: Number(move) },
+    };
+
+    socket.emit('makeMove', {
+      gameID: gameState.gameID,
+      move: nimMove,
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Task 2 - Update the move state based on the user input.
-    // The move should be a number between 1 and 3, and apply this validation before
-    // updating the state.
-
     const { value } = e.target;
+    const numValue = Number(e.target.value.slice(-1));
+
+    if (value === '' || (numValue >= 1 && numValue <= 3)) {
+      setMove(value === '' ? 1 : numValue);
+    }
   };
 
   return {

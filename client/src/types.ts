@@ -245,6 +245,12 @@ export interface GameMove {
   };
 }
 
+export interface GameMove2<MoveType> {
+  playerID: string;
+  gameID: string;
+  move: MoveType;
+}
+
 /**
  * Type representing the possible statuses of a game.
  */
