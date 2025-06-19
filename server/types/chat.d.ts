@@ -19,7 +19,8 @@ export interface MessageInChat extends Message {
  * messages is an array of MessageInChat objects.
  */
 export interface Chat {
-  // TODO: Task 3 - Define the properties of the Chat interface
+   participants: string[];
+  messages: Message[];
 }
 
 /**

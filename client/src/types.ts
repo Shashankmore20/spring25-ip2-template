@@ -196,7 +196,7 @@ export interface ChatUpdatePayload {
  */
 export interface UserUpdatePayload {
   user: User;
-  type: 'created' | 'deleted';
+  type: 'created' | 'updated' | 'deleted';
 }
 
 /**

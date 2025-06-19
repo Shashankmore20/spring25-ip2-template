@@ -298,7 +298,13 @@ describe('Test userController', () => {
       expect(getUsersListSpy).toHaveBeenCalled();
     });
 
-    // TODO: Task 1 - Add more tests
+    it('should return 500 if database error while finding users', async () => {
+      getUsersListSpy.mockResolvedValueOnce({ error: 'Error finding users' });
+
+      const response = await supertest(app).get(`/user/getUsers`);
+
+      expect(response.status).toBe(500);
+    });
   });
 
   describe('DELETE /deleteUser', () => {
@@ -348,6 +354,55 @@ describe('Test userController', () => {
       });
     });
 
-    // TODO: Task 1 - Add more tests
+    it('should return 400 for request missing username', async () => {
+      const mockReqBody = {
+        biography: 'some new biography',
+      };
+
+      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid user body');
+    });
+
+    it('should return 400 for request with empty username', async () => {
+      const mockReqBody = {
+        username: '',
+        biography: 'a new bio',
+      };
+
+      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid user body');
+    });
+
+    it('should return 400 for request missing biography field', async () => {
+      const mockReqBody = {
+        username: mockUser.username,
+      };
+
+      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid user body');
+    });
+
+    it('should return 500 if updateUser returns an error', async () => {
+      const mockReqBody = {
+        username: mockUser.username,
+        biography: 'Attempting update biography',
+      };
+
+      // Simulate a DB error
+      updatedUserSpy.mockResolvedValueOnce({ error: 'Error updating user' });
+
+      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toContain(
+        'Error when updating user biography: Error: Error updating user',
+      );
+    });
   });
 });

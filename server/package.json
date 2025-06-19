@@ -3,7 +3,7 @@
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "mongodb": "^6.12.0",
-    "mongoose": "^8.9.2",
+    "mongoose": "8.9.2",
     "nanoid": "^3.3.8",
     "npm": "^11.0.0",
     "socket.io": "^4.8.1"

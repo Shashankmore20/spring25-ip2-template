@@ -89,8 +89,22 @@ describe('getUsersList', () => {
     expect(retrievedUsers[0].username).toEqual(safeUser.username);
     expect(retrievedUsers[0].dateJoined).toEqual(safeUser.dateJoined);
   });
+  
+  it('should throw an error if the users cannot be found', async () => {
+    mockingoose(UserModel).toReturn(null, 'find');
 
-  // TODO: Task 1 - Add more tests for getUsersList
+    const getUsersError = await getUsersList();
+
+    expect('error' in getUsersError).toBe(true);
+  });
+
+  it('should throw an error if there is an error while searching the database', async () => {
+    mockingoose(UserModel).toReturn(new Error('Error finding document'), 'find');
+
+    const getUsersError = await getUsersList();
+
+    expect('error' in getUsersError).toBe(true);
+  });
 });
 
 describe('loginUser', () => {

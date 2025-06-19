@@ -30,6 +30,17 @@ const userController = (socket: FakeSOSocket) => {
     req.body.username !== '' &&
     req.body.password !== undefined &&
     req.body.password !== '';
+    
+  /**
+   * Validates that the request body contains all required fields to update a biography.
+   * @param req The incoming request containing user data.
+   * @returns `true` if the body contains valid user fields; otherwise, `false`.
+   */
+  const isUpdateBiographyBodyValid = (req: UpdateBiographyRequest): boolean =>
+    req.body !== undefined &&
+    req.body.username !== undefined &&
+    req.body.username.trim() !== '' &&
+    req.body.biography !== undefined;
 
   /**
    * Handles the creation of a new user account.
@@ -126,7 +137,17 @@ const userController = (socket: FakeSOSocket) => {
    * @returns A promise resolving to void.
    */
   const getUsers = async (_: Request, res: Response): Promise<void> => {
-    // TODO: Task 1 - Implement the getUsers endpoint
+    try {
+      const users = await getUsersList();
+
+      if ('error' in users) {
+        throw Error(users.error);
+      }
+
+      res.status(200).json(users);
+    } catch (error) {
+      res.status(500).send(`Error when getting users: ${error}`);
+    }
   };
 
   /**
@@ -188,7 +209,20 @@ const userController = (socket: FakeSOSocket) => {
    */
   const updateBiography = async (req: UpdateBiographyRequest, res: Response): Promise<void> => {
     try {
-      // TODO: Task 1 - Implement the updateBiography function, including request validation
+      if (!isUpdateBiographyBodyValid(req)) {
+        res.status(400).send('Invalid user body');
+        return;
+      }
+
+      // Validate that request has username and biography
+      const { username, biography } = req.body;
+
+      // Call the same updateUser(...) service used by resetPassword
+      const updatedUser = await updateUser(username, { biography });
+
+      if ('error' in updatedUser) {
+        throw new Error(updatedUser.error);
+      }
 
       // Emit socket event for real-time updates
       socket.emit('userUpdate', {
@@ -196,9 +230,9 @@ const userController = (socket: FakeSOSocket) => {
         type: 'updated',
       });
 
-      // TODO: Task 1 - Return the updated user object
+      res.status(200).json(updatedUser);
     } catch (error) {
-      // TODO: Task 1 - Handle errors appropriately
+       res.status(500).send(`Error when updating user biography: ${error}`);
     }
   };
 
@@ -208,9 +242,8 @@ const userController = (socket: FakeSOSocket) => {
   router.patch('/resetPassword', resetPassword);
   router.get('/getUser/:username', getUser);
   router.delete('/deleteUser/:username', deleteUser);
-
-  // TODO: Task 1- Add a route for updating a user's biography
-  // TODO: Task 1 - Add a route for getting all users
+  router.get('/getUsers', getUsers);
+  router.patch('/updateBiography', updateBiography);
 
   return router;
 };
