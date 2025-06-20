@@ -14,6 +14,7 @@ import {
 } from '../../services/chat.service';
 import { Chat, CreateChatPayload } from '../../types/chat';
 import { Message } from '../../types/message';
+import { ObjectId } from 'mongodb';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockingoose = require('mockingoose');
 
@@ -27,7 +28,19 @@ describe('Chat service', () => {
   // 1. saveChat
   // ----------------------------------------------------------------------------
   describe('saveChat', () => {
-    // TODO: Task 3 - Write tests for the saveChat function
+    const mockChatPayload: Chat = {
+      participants: ['user1'],
+      messages: [
+        {
+          _id: new mongoose.Types.ObjectId(),
+          msg: 'Hello!',
+          msgFrom: 'user1',
+          msgDateTime: new Date('2025-01-01T00:00:00.000Z'),
+          type: 'direct',
+        },
+      ],
+      _id: new ObjectId
+    };
 
 
     it('should successfully save a chat and verify its body (ignore exact IDs)', async () => {
@@ -75,7 +88,6 @@ describe('Chat service', () => {
   // 2. createMessage
   // ----------------------------------------------------------------------------
   describe('createMessage', () => {
-    // TODO: Task 3 - Write tests for the createMessage function
     const mockMessage: Message = {
       msg: 'Hey!',
       msgFrom: 'userX',
@@ -106,13 +118,18 @@ describe('Chat service', () => {
         type: 'direct',
       });
     });
+    
+    it('should return error if user does not exist', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+      const result = await createMessage(mockMessage);
+      expect(result).toEqual({ error: 'Error creating message: User not found' });
+    });
   });
 
   // ----------------------------------------------------------------------------
   // 3. addMessageToChat
   // ----------------------------------------------------------------------------
   describe('addMessageToChat', () => {
-    // TODO: Task 3 - Write tests for the addMessageToChat function
     it('should add a message ID to an existing chat', async () => {
       const chatId = new mongoose.Types.ObjectId().toString();
       const messageId = new mongoose.Types.ObjectId().toString();
@@ -135,6 +152,16 @@ describe('Chat service', () => {
 
       expect(result.messages).toEqual(mockUpdatedChat.messages);
     });
+
+    it('should return error if chat update fails', async () => {
+      const chatId = new mongoose.Types.ObjectId().toString();
+      const messageId = new mongoose.Types.ObjectId().toString();
+
+      mockingoose(ChatModel).toReturn(new Error('Update failed'), 'findOneAndUpdate');
+
+      const result = await addMessageToChat(chatId, messageId);
+      expect(result).toEqual({ error: 'Error adding message to chat: Error: Update failed' });
+    });
   });
 
 
@@ -142,7 +169,6 @@ describe('Chat service', () => {
   // 5. addParticipantToChat
   // ----------------------------------------------------------------------------
   describe('addParticipantToChat', () => {
-    // TODO: Task 3 - Write tests for the addParticipantToChat function
     it('should add a participant if user exists', async () => {
       // Mock user
       mockingoose(UserModel).toReturn(
@@ -165,6 +191,25 @@ describe('Chat service', () => {
         throw new Error('Expected a chat, got an error');
       }
       expect(result._id).toEqual(mockChat._id);
+    });
+
+    it('should return error if user does not exist', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+
+      const result = await addParticipantToChat('fakeChatId', 'missingUser');
+      expect(result).toEqual({ error: 'Error adding participant to chat: User does not exist.' });
+    });
+
+    it('should return error if DB update fails', async () => {
+      mockingoose(UserModel).toReturn(
+        { _id: new mongoose.Types.ObjectId(), username: 'testUser' },
+        'findOne',
+      );
+
+      mockingoose(ChatModel).toReturn(new Error('Update error'), 'findOneAndUpdate');
+
+      const result = await addParticipantToChat('chatId', 'testUser');
+      expect(result).toEqual({ error: 'Error adding participant to chat: Update error' });
     });
   });
 
